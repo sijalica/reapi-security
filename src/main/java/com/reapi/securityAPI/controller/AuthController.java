@@ -2,14 +2,12 @@ package com.reapi.securityAPI.controller;
 
 import com.reapi.securityAPI.request.LoginRequest;
 import com.reapi.securityAPI.response.LoginResponse;
+import com.reapi.securityAPI.service.AuthService;
 import com.reapi.securityAPI.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,24 +22,12 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
+    private final AuthService authService;
     private final JwtUtil jwtUtil;
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-            );
-
-            String token = jwtUtil.generateToken(authentication);
-            String refreshToken = jwtUtil.generateRefreshToken(request.getUsername());
-
-            return new LoginResponse(token, refreshToken);
-
-        } catch (AuthenticationException e) {
-            throw new RuntimeException("Invalid username or password");
-        }
+    public ResponseEntity<LoginResponse> login(@RequestBody @Validated LoginRequest request) {
+        return ResponseEntity.ok(authService.generateToken(request));
     }
 
     @PostMapping("/refresh")
